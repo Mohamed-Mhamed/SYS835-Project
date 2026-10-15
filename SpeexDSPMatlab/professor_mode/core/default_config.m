@@ -1,0 +1,19 @@
+function config = default_config()
+config.Fs = 8000;
+config.BlockSize = 256;
+config.HopSize = 256;
+config.FFTSize = 256;
+config.TargetSNRdB = 10;
+config.InitialNoiseFrames = 4;
+config.NoiseHistoryFrames = 8;
+config.NoiseMargin = 1.20;
+config.GainFloor = 0.01;
+config.DecisionDirectedAlpha = 0.98;
+config.GainSmoothing = 0.45;
+config.PresenceSmoothing = 0.80;
+config.PresenceThreshold = 2;
+config.CleanFile = '1z88153a8.mat';
+config.NoiseFile = 'white8.mat';
+config.ShowPlots = true;
+config.PlayAudio = true;
+end

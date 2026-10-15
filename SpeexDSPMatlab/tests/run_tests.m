@@ -1,0 +1,32 @@
+function run_tests()
+root=fileparts(fileparts(mfilename('fullpath')));
+addpath(fullfile(root,'professor_mode','core'));
+c=default_config();x=sin(2*pi*440*(0:255)'/c.Fs);assert(max(abs(real(ifft(fft(x)))-x))<1e-10);
+assert(c.Fs==8000&&c.BlockSize==256&&c.HopSize==256);
+addpath(fullfile(root,'reference_mode','core'));
+r=default_config(); testInput=sin(2*pi*440*(0:1599)'/r.Fs);
+[bank] = design_filterbank(r);
+assert(bank.NumBands == 24 && bank.NumBins == r.FFTSize);
+assert(all(bank.Left >= 1) && all(bank.Right <= 24));
+bandTest = filterbank_forward(bank, ones(r.FFTSize,1));
+assert(all(isfinite(bandTest)) && all(bandTest >= 0));
+[testOutput,diagnostics,state]=process_signal(testInput,r);
+assert(length(testOutput)==length(testInput));
+assert(all(isfinite(testOutput)) && all(isfinite(diagnostics.Gain(:))));
+assert(all(diagnostics.Gain(:)>=r.GainFloor-eps) && all(diagnostics.Gain(:)<=1+eps));
+assert(state.FrameIndex==ceil(length(testInput)/r.HopSize));
+p = portable_config();
+probe = sin(2*pi*440*(0:319)'/p.Fs) + 0.2*cos(2*pi*900*(0:319)'/p.Fs);
+packed = speex_kiss_fft_forward(probe, 320);
+reconstructed = speex_kiss_fft_inverse(packed, 320);
+assert(max(abs(reconstructed-probe)) < 1e-9);
+[portableOutput,portableDiagnostics,portableState] = process_signal(testInput,p);
+assert(length(portableOutput)==length(testInput));
+assert(all(isfinite(portableOutput)));
+assert(all(isfinite(portableDiagnostics.Gain(:))));
+assert(portableState.FrameIndex==ceil(length(testInput)/p.HopSize));
+assert(all(isfinite(speex_source_gain(ones(160,1),ones(160,1),p))));
+fprintf('SpeexDSPMatlab professor-mode core tests passed.\n');
+fprintf('SpeexDSPMatlab reference-mode state and overlap tests passed.\n');
+fprintf('SpeexDSPMatlab portable packed-FFT tests passed.\n');
+end
